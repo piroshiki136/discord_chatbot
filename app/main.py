@@ -7,8 +7,7 @@ import google.generativeai as genai
 from discord import Embed, app_commands
 from discord.ext import commands
 from dotenv import load_dotenv
-
-from app.server import server_thread
+from server import server_thread
 
 # ===============================
 # 設定の読み込み
