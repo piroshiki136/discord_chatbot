@@ -190,9 +190,9 @@ async def chat(interaction: discord.Interaction, message: str):
 
     # Embed作成
     embed = Embed(title="ツンデレ幼馴染の返答", description=response, color=0x00FF00)
-
     # メッセージをEmbedで送信
-    await interaction.followup.send(content=f"**メッセージ**: {message}", embed=embed)
+    print(message)
+    await interaction.followup.send(f"{message}", embed=embed)
 
     # ボイスチャットにBotがいる場合、返答を読み上げ
     vc = discord.utils.get(bot.voice_clients, guild=interaction.guild)
@@ -220,7 +220,7 @@ async def leave(interaction: discord.Interaction):
 # ===============================
 # サーバー起動
 # ===============================
-server_thread()
+# server_thread()
 
 
 # ===============================
