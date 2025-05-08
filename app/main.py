@@ -7,11 +7,13 @@ from discord import Embed, app_commands
 from discord.ext import commands
 from dotenv import load_dotenv
 
+from app.server import server_thread
+
 # ===============================
 # 設定の読み込み
 # ===============================
 
-load_dotenv(".env.local")
+load_dotenv()
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
@@ -195,6 +197,12 @@ async def join(interaction: discord.Interaction):
 @tree.command(name="leave", description="ボイスチャットから抜けます")
 async def leave(interaction: discord.Interaction):
     await leave_voice_channel(interaction)
+
+
+# ===============================
+# サーバー起動
+# ===============================
+server_thread()
 
 
 # ===============================
