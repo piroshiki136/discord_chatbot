@@ -1,17 +1,18 @@
+import asyncio
 import os
 
+import aiohttp
 import discord
 import google.generativeai as genai
 from discord import Embed, app_commands
 from discord.ext import commands
 from dotenv import load_dotenv
-from server import server_thread
 
 # ===============================
 # 設定の読み込み
 # ===============================
 
-load_dotenv()
+load_dotenv(".env.local")
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
@@ -60,32 +61,53 @@ def get_gemini_response(full_message: str) -> str:
 
 
 # ===============================
-# 音声合成関数
+# 音声合成関数 (Web API使用)
 # ===============================
 
-"""
-async def synthesize_speech(text: str, speaker: int = 8) -> bytes:
-    # VoiceVoxで音声を合成してバイナリデータとして返す関数。
+
+async def synthesize(text: str, speaker: int = 8) -> bytes:
+    """
+    Web APIを使用して音声を合成し、バイナリデータとして返す関数。
+    """
     async with aiohttp.ClientSession() as session:
-        # 音声クエリ作成
-        async with session.post(
-            "http://localhost:50021/audio_query", params={"text": text, "speaker": speaker}
-        ) as query_resp:
-            query = await query_resp.json()
-        # 音声合成
-        async with session.post(
-            "http://localhost:50021/synthesis", params={"speaker": speaker}, json=query
-        ) as synth_resp:
-            return await synth_resp.read()
-"""
+        url = "https://api.tts.quest/v3/voicevox/synthesis"
+        params = {"text": text, "speaker": speaker}
+
+        async with session.get(url, params=params) as resp:
+            data = await resp.json()
+            if not data.get("success"):
+                print("エラー:", data.get("errorMessage"))
+                return None
+
+            wav_url = data["wavDownloadUrl"]
+            status_url = data["audioStatusUrl"]
+            print("音声URL:", wav_url)
+
+        # 音声生成の完了を待機
+        while True:
+            async with session.get(status_url) as status_resp:
+                status_data = await status_resp.json()
+                if status_data.get("isAudioReady"):
+                    print("音声生成が完了しました。")
+                    break
+                print("音声生成中...")
+                await asyncio.sleep(1)  # 1秒待機して再確認
+
+        # 音声データのダウンロード
+        async with session.get(wav_url) as wav_resp:
+            wav_data = await wav_resp.read()
+            return wav_data
+
 
 # ===============================
 # 音声を再生する関数
 # ===============================
 
-"""
+
 async def play_speech(vc: discord.VoiceClient, speech_data: bytes):
+    """
     合成した音声をボイスチャットで再生する関数。
+    """
     if vc.is_playing():
         vc.stop()
 
@@ -93,15 +115,15 @@ async def play_speech(vc: discord.VoiceClient, speech_data: bytes):
         f.write(speech_data)
 
     vc.play(discord.FFmpegPCMAudio("output.wav"))
-"""
+
 
 # ===============================
 # ボイスチャットに参加するコマンド
 # ===============================
 
-"""
+
 async def join_voice_channel(interaction: discord.Interaction):
-    # イスチャットに参加する処理
+    """ボイスチャットに参加する処理"""
     channel = interaction.user.voice.channel if interaction.user.voice else None
     print(channel)
     if channel:
@@ -113,22 +135,22 @@ async def join_voice_channel(interaction: discord.Interaction):
             "ボイスチャットに接続しているチャネルがありません。"
         )
         return None
-"""
+
 
 # ===============================
 # ボイスチャットから抜けるコマンド
 # ===============================
 
-"""
+
 async def leave_voice_channel(interaction: discord.Interaction):
-    # ボイスチャットから抜ける処理
+    """ボイスチャットから抜ける処理"""
     vc = discord.utils.get(bot.voice_clients, guild=interaction.guild)
     if vc:
         await vc.disconnect()
         await interaction.response.send_message("ボイスチャットから抜けました。")
     else:
         await interaction.response.send_message("ボイスチャットに参加していません。")
-"""
+
 
 # ===============================
 # Bot 起動時の処理
@@ -171,20 +193,19 @@ async def chat(interaction: discord.Interaction, message: str):
     # メッセージをEmbedで送信
     await interaction.followup.send(content=f"**メッセージ**: {message}", embed=embed)
 
-    # ボイスチャンネルにBotがいる場合、返答を読み上げ（コメントアウト）
-    """
+    # ボイスチャットにBotがいる場合、返答を読み上げ
     vc = discord.utils.get(bot.voice_clients, guild=interaction.guild)
     if vc and vc.is_connected():
-        speech_data = await synthesize_speech(response)
-        await play_speech(vc, speech_data)
-    """
+        speech_data = await synthesize(response)
+        if speech_data:
+            await play_speech(vc, speech_data)
 
 
 # ===============================
-# ボイスチャットコマンド（コメントアウト）
+# ボイスチャットコマンド
 # ===============================
 
-"""
+
 @tree.command(name="join", description="ボイスチャットに参加します")
 async def join(interaction: discord.Interaction):
     await join_voice_channel(interaction)
@@ -193,12 +214,6 @@ async def join(interaction: discord.Interaction):
 @tree.command(name="leave", description="ボイスチャットから抜けます")
 async def leave(interaction: discord.Interaction):
     await leave_voice_channel(interaction)
-"""
-
-# ===============================
-# サーバー起動
-# ===============================
-server_thread()
 
 
 # ===============================
