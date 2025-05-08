@@ -1,13 +1,11 @@
 import os
 
-import aiohttp
 import discord
 import google.generativeai as genai
 from discord import Embed, app_commands
 from discord.ext import commands
 from dotenv import load_dotenv
-
-from app.server import server_thread
+from server import server_thread
 
 # ===============================
 # 設定の読み込み
@@ -65,11 +63,9 @@ def get_gemini_response(full_message: str) -> str:
 # 音声合成関数
 # ===============================
 
-
+"""
 async def synthesize_speech(text: str, speaker: int = 8) -> bytes:
-    """
-    VoiceVoxで音声を合成してバイナリデータとして返す関数。
-    """
+    # VoiceVoxで音声を合成してバイナリデータとして返す関数。
     async with aiohttp.ClientSession() as session:
         # 音声クエリ作成
         async with session.post(
@@ -81,17 +77,15 @@ async def synthesize_speech(text: str, speaker: int = 8) -> bytes:
             "http://localhost:50021/synthesis", params={"speaker": speaker}, json=query
         ) as synth_resp:
             return await synth_resp.read()
-
+"""
 
 # ===============================
 # 音声を再生する関数
 # ===============================
 
-
+"""
 async def play_speech(vc: discord.VoiceClient, speech_data: bytes):
-    """
     合成した音声をボイスチャットで再生する関数。
-    """
     if vc.is_playing():
         vc.stop()
 
@@ -99,15 +93,15 @@ async def play_speech(vc: discord.VoiceClient, speech_data: bytes):
         f.write(speech_data)
 
     vc.play(discord.FFmpegPCMAudio("output.wav"))
-
+"""
 
 # ===============================
 # ボイスチャットに参加するコマンド
 # ===============================
 
-
+"""
 async def join_voice_channel(interaction: discord.Interaction):
-    """ボイスチャットに参加する処理"""
+    # イスチャットに参加する処理
     channel = interaction.user.voice.channel if interaction.user.voice else None
     print(channel)
     if channel:
@@ -119,22 +113,22 @@ async def join_voice_channel(interaction: discord.Interaction):
             "ボイスチャットに接続しているチャネルがありません。"
         )
         return None
-
+"""
 
 # ===============================
 # ボイスチャットから抜けるコマンド
 # ===============================
 
-
+"""
 async def leave_voice_channel(interaction: discord.Interaction):
-    """ボイスチャットから抜ける処理"""
+    # ボイスチャットから抜ける処理
     vc = discord.utils.get(bot.voice_clients, guild=interaction.guild)
     if vc:
         await vc.disconnect()
         await interaction.response.send_message("ボイスチャットから抜けました。")
     else:
         await interaction.response.send_message("ボイスチャットに参加していません。")
-
+"""
 
 # ===============================
 # Bot 起動時の処理
@@ -177,18 +171,20 @@ async def chat(interaction: discord.Interaction, message: str):
     # メッセージをEmbedで送信
     await interaction.followup.send(content=f"**メッセージ**: {message}", embed=embed)
 
-    # ボイスチャンネルにBotがいる場合、返答を読み上げ
+    # ボイスチャンネルにBotがいる場合、返答を読み上げ（コメントアウト）
+    """
     vc = discord.utils.get(bot.voice_clients, guild=interaction.guild)
     if vc and vc.is_connected():
         speech_data = await synthesize_speech(response)
         await play_speech(vc, speech_data)
+    """
 
 
 # ===============================
-# ボイスチャットコマンド
+# ボイスチャットコマンド（コメントアウト）
 # ===============================
 
-
+"""
 @tree.command(name="join", description="ボイスチャットに参加します")
 async def join(interaction: discord.Interaction):
     await join_voice_channel(interaction)
@@ -197,7 +193,7 @@ async def join(interaction: discord.Interaction):
 @tree.command(name="leave", description="ボイスチャットから抜けます")
 async def leave(interaction: discord.Interaction):
     await leave_voice_channel(interaction)
-
+"""
 
 # ===============================
 # サーバー起動
