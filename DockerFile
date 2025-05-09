@@ -33,12 +33,12 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 # アプリケーションのコードをコピー
 COPY . .
 
-# supervisordの設定ファイルをコピー
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+# start.shを実行可能にする
+RUN chmod +x /start.sh
 
 # ポートの開放
 EXPOSE 50021
 EXPOSE 8080
 
 # start.shを使ってvoicevoxとPythonプログラムを起動
-CMD ["/app/start.sh"]
+CMD ["/start.sh"]
