@@ -40,5 +40,5 @@ COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 EXPOSE 50021
 EXPOSE 8080
 
-# supervisordを起動
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+# start.shを使ってvoicevoxとPythonプログラムを起動
+CMD ["/app/start.sh"]
