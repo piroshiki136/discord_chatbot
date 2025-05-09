@@ -4,7 +4,7 @@ FROM voicevox/voicevox_engine:cpu-latest
 
 
 # 作業ディレクトリの設定
-WORKDIR /app
+WORKDIR /scr
 
 RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     locales \
@@ -34,11 +34,11 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 COPY . .
 
 # start.shを実行可能にする
-RUN chmod +x /start.sh
+RUN chmod +x /scr/start.sh
 
 # ポートの開放
 EXPOSE 50021
 EXPOSE 8080
 
 # start.shを使ってvoicevoxとPythonプログラムを起動
-CMD ["/start.sh"]
+CMD ["/scr/start.sh"]
