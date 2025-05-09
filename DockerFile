@@ -1,44 +1,44 @@
-# Python 3.11の公式イメージをベースにする
-FROM python:3.11
+# VOICEVOXの公式CPU版イメージをベースにする
+FROM voicevox/voicevox_engine:cpu-latest
+
+
 
 # 作業ディレクトリの設定
-WORKDIR /bot
+WORKDIR /app
 
-# 更新・日本語環境の設定
-RUN apt-get update && apt-get -y install \
+RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     locales \
     ffmpeg \
-    && apt-get -y upgrade \
+    python3.11 \
+    python3.11-venv \
+    python3.11-dev \
+    python3-pip \
+    supervisor \
     && localedef -f UTF-8 -i ja_JP ja_JP.UTF-8 \
+    && python3.11 -m pip install --upgrade pip \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # 環境変数の設定
-ENV LANG ja_JP.UTF-8
-ENV LANGUAGE ja_JP:ja
-ENV LC_ALL ja_JP.UTF-8
-ENV TZ Asia/Tokyo
-ENV TERM xterm
+ENV LANG=ja_JP.UTF-8 \
+    LANGUAGE=ja_JP:ja \
+    LC_ALL=ja_JP.UTF-8 \
+    TZ=Asia/Tokyo \
+    TERM=xterm
 
-# requirements.txt のコピーと依存関係のインストール
-COPY requirements.txt /bot/
-RUN pip install --no-cache-dir -r requirements.txt
+# Pythonパッケージのインストール
+COPY requirements.txt .
+RUN pip3 install --no-cache-dir -r requirements.txt
 
 # アプリケーションのコードをコピー
-COPY . /bot
+COPY . .
 
-# VoiceVoxサーバーのセットアップ（コメントアウト）
-# RUN mkdir -p /opt/voicevox \
-#     && curl -Lo /opt/voicevox/voicevox-docker.tar.gz https://github.com/VOICEVOX/voicevox/releases/download/voicevox-1.0.0/voicevox-docker.tar.gz \
-#     && tar -xzvf /opt/voicevox/voicevox-docker.tar.gz -C /opt/voicevox \
-#     && rm /opt/voicevox/voicevox-docker.tar.gz
+# supervisordの設定ファイルをコピー
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# VoiceVoxサーバーをバックグラウンドで起動（コメントアウト）
-# EXPOSE 50021
-# CMD ["bash", "-c", "cd /opt/voicevox/voicevox-docker && ./run.sh & python app/main.py"]
-
-# テキストのみのボットを起動
-CMD ["python", "app/main.py"]
-
-# アプリケーションのポートを開放
+# ポートの開放
+EXPOSE 50021
 EXPOSE 8080
+
+# supervisordを起動
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
