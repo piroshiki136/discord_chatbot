@@ -4,4 +4,4 @@
 /usr/local/bin/voicevox_engine &
 
 # Pythonプログラムを起動
-python3 /app/main.py
+python3 /scr/app/main.py
