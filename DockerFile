@@ -16,7 +16,8 @@ RUN apt-get update && \
     python3-pip \
     supervisor && \
     apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* && \
+    pip3 install --upgrade pip
 
 # Python 3.11をデフォルトのpythonコマンドに設定
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1 && \
