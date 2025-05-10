@@ -19,7 +19,6 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel("gemini-2.0-flash")
-chat_session = model.start_chat()
 
 # ===============================
 # Discord Bot の設定
@@ -55,6 +54,8 @@ def get_gemini_response(full_message: str) -> str:
     Geminiにメッセージを送り、返答を受け取る関数。
     """
     try:
+        # これでメッセージが混同されない
+        chat_session = model.start_chat()
         response = chat_session.send_message(full_message)
         return response.text
     except Exception as e:
