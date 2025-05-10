@@ -220,7 +220,7 @@ async def leave(interaction: discord.Interaction):
 # ===============================
 # サーバー起動
 # ===============================
-# server_thread()
+server_thread()
 
 
 # ===============================
