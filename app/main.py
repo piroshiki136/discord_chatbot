@@ -1,5 +1,6 @@
 import asyncio
 import os
+from typing import Optional
 
 import aiohttp
 import discord
@@ -16,6 +17,7 @@ from server import server_thread
 load_dotenv(".env.local")
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+VOICEVOX_API_KEY = os.getenv("VOICEVOX_API_KEY")
 
 genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel("gemini-2.0-flash")
@@ -59,7 +61,7 @@ def get_gemini_response(full_message: str) -> str:
         response = chat_session.send_message(full_message)
         return response.text
     except Exception as e:
-        return f"エラーが発生しました: {str(e)}"
+        return f"❌ エラーが発生しました: {str(e)}"
 
 
 # ===============================
@@ -67,38 +69,24 @@ def get_gemini_response(full_message: str) -> str:
 # ===============================
 
 
-async def synthesize(text: str, speaker: int = 8) -> bytes:
+async def synthesize(text: str, speaker: int = 8) -> Optional[bytes]:
     """
-    Web APIを使用して音声を合成し、バイナリデータとして返す関数。
+    su-shiki の VoiceVox API を使って音声合成し、音声バイナリを返す。
     """
-    async with aiohttp.ClientSession() as session:
-        url = "https://api.tts.quest/v3/voicevox/synthesis"
-        params = {"text": text, "speaker": speaker}
+    url = "https://api.su-shiki.com/v2/voicevox/audio/"
+    params = {"text": text, "key": VOICEVOX_API_KEY, "speaker": speaker}
 
-        async with session.get(url, params=params) as resp:
-            data = await resp.json()
-            if not data.get("success"):
-                print("エラー:", data.get("errorMessage"))
-                return None
-
-            wav_url = data["wavDownloadUrl"]
-            status_url = data["audioStatusUrl"]
-            print("音声URL:", wav_url)
-
-        # 音声生成の完了を待機
-        while True:
-            async with session.get(status_url) as status_resp:
-                status_data = await status_resp.json()
-                if status_data.get("isAudioReady"):
-                    print("音声生成が完了しました。")
-                    break
-                print("音声生成中...")
-                await asyncio.sleep(1)  # 1秒待機して再確認
-
-        # 音声データのダウンロード
-        async with session.get(wav_url) as wav_resp:
-            wav_data = await wav_resp.read()
-            return wav_data
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, params=params) as resp:
+                if resp.status != 200:
+                    print(f"音声生成に失敗しました: {resp.status}")
+                    return None
+                audio_data = await resp.read()
+                return audio_data
+    except Exception as e:
+        print(f"音声生成中にエラーが発生しました: {e}")
+        return None
 
 
 # ===============================
@@ -189,6 +177,11 @@ async def chat(interaction: discord.Interaction, message: str):
     # Geminiに送信し、返答を取得
     response = get_gemini_response(full_message)
 
+    # エラーの場合
+    if response.startswith("❌"):
+        await interaction.followup.send(response)
+        return
+
     # Embed作成
     embed = Embed(title="ツンデレ幼馴染の返答", description=response, color=0x00FF00)
     # メッセージをEmbedで送信
@@ -201,6 +194,10 @@ async def chat(interaction: discord.Interaction, message: str):
         speech_data = await synthesize(response)
         if speech_data:
             await play_speech(vc, speech_data)
+        else:
+            await interaction.followup.send(
+                "音声合成に失敗しました。VoiceVox APIでエラーが発生した可能性があります"
+            )
 
 
 # ===============================
