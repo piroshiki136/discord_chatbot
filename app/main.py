@@ -193,7 +193,7 @@ async def chat(interaction: discord.Interaction, message: str):
     embed = Embed(title="ツンデレ幼馴染の返答", description=response, color=0x00FF00)
     # メッセージをEmbedで送信
     print(message)
-    await interaction.followup.send(f"{message}", embed=embed)
+    await interaction.followup.send(f"**メッセージ: **{message}", embed=embed)
 
     # ボイスチャットにBotがいる場合、返答を読み上げ
     vc = discord.utils.get(bot.voice_clients, guild=interaction.guild)
