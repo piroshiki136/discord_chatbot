@@ -1,20 +1,21 @@
-import asyncio
+import io
 import os
 from typing import Optional
 
 import aiohttp
 import discord
 import google.generativeai as genai
-from discord import Embed, app_commands
+from discord import Embed, FFmpegPCMAudio, app_commands
 from discord.ext import commands
 from dotenv import load_dotenv
-from server import server_thread
+
+# from server import server_thread
 
 # ===============================
 # 設定の読み込み
 # ===============================
 
-load_dotenv(".env.local")
+load_dotenv()
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 VOICEVOX_API_KEY = os.getenv("VOICEVOX_API_KEY")
@@ -101,10 +102,9 @@ async def play_speech(vc: discord.VoiceClient, speech_data: bytes):
     if vc.is_playing():
         vc.stop()
 
-    with open("output.wav", "wb") as f:
-        f.write(speech_data)
-
-    vc.play(discord.FFmpegPCMAudio("output.wav"))
+    # メモリ上に音声データを保持する
+    audio_source = FFmpegPCMAudio(source=io.BytesIO(speech_data), pipe=True)
+    vc.play(audio_source)
 
 
 # ===============================
@@ -165,7 +165,7 @@ async def chat(interaction: discord.Interaction, message: str):
 
     # 会話履歴の取得
     chat_history = []
-    async for message_history in interaction.channel.history(limit=7):
+    async for message_history in interaction.channel.history(limit=5):
         chat_history.append(f"{message_history.author}: {message_history.content}")
     chat_history.reverse()
     chat_history = "\n".join(chat_history)
@@ -196,8 +196,9 @@ async def chat(interaction: discord.Interaction, message: str):
             await play_speech(vc, speech_data)
         else:
             await interaction.followup.send(
-                "音声合成に失敗しました。VoiceVox APIでエラーが発生した可能性があります"
+                "音声合成に失敗しました。APIのポイントが不足している可能性があります。"
             )
+            vc.play(discord.FFmpegPCMAudio("error.wav"))
 
 
 # ===============================
@@ -218,7 +219,7 @@ async def leave(interaction: discord.Interaction):
 # ===============================
 # サーバー起動
 # ===============================
-server_thread()
+# server_thread()
 
 
 # ===============================
