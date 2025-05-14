@@ -166,13 +166,19 @@ async def chat(interaction: discord.Interaction, message: str):
     # 会話履歴の取得
     chat_history = []
     async for message_history in interaction.channel.history(limit=5):
-        chat_history.append(f"{message_history.author}: {message_history.content}")
+        text = message_history.content
+        if message_history.embeds:
+            embed_title = message_history.embeds[0].title
+            embed_description = message_history.embeds[0].description
+            text += f", {embed_title}: {embed_description}"
+        chat_history.append(f"{message_history.author}: {text}")
+        print(chat_history)
     chat_history.reverse()
     chat_history = "\n".join(chat_history)
 
     # テンプレートを読み込み、ユーザーメッセージと結合
     prompt = load_prompt_template("prompt.txt")
-    full_message = f"直前の会話履歴{chat_history}\n\nプロンプト:{prompt}{message}"
+    full_message = f"直前の会話履歴{chat_history}\n\n{prompt}{message}"
 
     # Geminiに送信し、返答を取得
     response = get_gemini_response(full_message)
@@ -185,7 +191,6 @@ async def chat(interaction: discord.Interaction, message: str):
     # Embed作成
     embed = Embed(title="ツンデレ幼馴染の返答", description=response, color=0x00FF00)
     # メッセージをEmbedで送信
-    print(message)
     await interaction.followup.send(f"**メッセージ: **{message}", embed=embed)
 
     # ボイスチャットにBotがいる場合、返答を読み上げ
