@@ -16,6 +16,7 @@ Google Gemini API を活用し、VC（ボイスチャット）にいる場合は
 ## 🛠 使用技術
 
 | 項目       | 内容                         |
+|------------|------------------------------|
 | 言語       | Python 3.12                  |
 | Discord API | [discord.py](https://github.com/Rapptz/discord.py) |
 | AI連携     | Google Gemini API            |
