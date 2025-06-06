@@ -34,9 +34,9 @@ git clone https://github.com/yourname/discord-studybot.git
 cd discord-studybot
 pip install -r requirements.txt
 ```
-.envファイルを作成し、以下の情報を入力
-DISCORD_TOKEN=xxx
-GEMINI_API_KEY=xxx
+.envファイルを作成し、以下の情報を入力  
+DISCORD_TOKEN=xxx  
+GEMINI_API_KEY=xxx  
 VOICEVOX_API_KEY=xxx
 
 常時起動する場合は任意のサーバーにデプロイ
